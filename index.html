@@ -55,6 +55,7 @@
 
     p {
       font-size: 1.2rem;
+      margin: 10px 0 0;
     }
 
     .img-wrap {
@@ -76,6 +77,9 @@
       position: relative;
       width: 100%;
       height: 160px;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     button {
@@ -85,19 +89,21 @@
       font-size: 1.3rem;
       cursor: pointer;
       position: absolute;
+      touch-action: manipulation;
+      white-space: nowrap;
     }
 
     .yes {
       background: linear-gradient(135deg, #ff4d7d, #ff7aa2);
       color: white;
-      left: 35%;
+      left: 20%;
       top: 60px;
     }
 
     .no {
       background: #e9e9ef;
       color: #2b2b2b;
-      left: 55%;
+      left: 60%;
       top: 60px;
     }
 
@@ -106,19 +112,20 @@
     .heart {
       position: fixed;
       bottom: -40px;
-      font-size: 3.2rem;
-      animation: floatUp 5s ease-in forwards;
+      font-size: 3.6rem;
+      animation: floatUp 5.5s ease-in forwards;
       pointer-events: none;
       z-index: 1;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.10));
     }
 
     @keyframes floatUp {
       0% {
-        transform: translateY(0) scale(1);
+        transform: translateY(0) scale(1) rotate(0deg);
         opacity: 1;
       }
       100% {
-        transform: translateY(-120vh) scale(1.8);
+        transform: translateY(-120vh) scale(1.9) rotate(18deg);
         opacity: 0;
       }
     }
@@ -158,28 +165,49 @@
     const question = document.getElementById("question");
     const thanks = document.getElementById("thanks");
 
+    function intersects(a, b, gap = 10) {
+      return !(
+        a.right + gap < b.left ||
+        a.left - gap > b.right ||
+        a.bottom + gap < b.top ||
+        a.top - gap > b.bottom
+      );
+    }
+
     function moveNo() {
       const area = btnArea.getBoundingClientRect();
-      const btn = noBtn.getBoundingClientRect();
+      const yesRect = yesBtn.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
       const padding = 10;
 
-      const x = Math.random() * (area.width - btn.width - padding * 2) + padding;
-      const y = Math.random() * (area.height - btn.height - padding * 2) + padding;
+      let x, y, tries = 0;
 
-      noBtn.style.left = x + "px";
-      noBtn.style.top = y + "px";
+      do {
+        const maxX = Math.max(padding, area.width - btnRect.width - padding);
+        const maxY = Math.max(padding, area.height - btnRect.height - padding);
+
+        x = padding + Math.random() * (maxX - padding);
+        y = padding + Math.random() * (maxY - padding);
+
+        noBtn.style.left = x + "px";
+        noBtn.style.top = y + "px";
+
+        tries++;
+      } while (intersects(noBtn.getBoundingClientRect(), yesRect, 14) && tries < 80);
     }
 
     function spawnHearts() {
-      const hearts = ["💖","💘","💕","💝","💗","❤️"];
-      for (let i = 0; i < 45; i++) {
+      const hearts = ["💖","💘","💕","💝","💗","❤️","😍","✨"];
+      for (let i = 0; i < 70; i++) {
         const h = document.createElement("div");
         h.className = "heart";
         h.textContent = hearts[Math.floor(Math.random() * hearts.length)];
         h.style.left = Math.random() * 100 + "vw";
-        h.style.animationDuration = (4 + Math.random() * 2) + "s";
+        h.style.fontSize = (3.6 + Math.random() * 2.2) + "rem";
+        h.style.animationDuration = (4.8 + Math.random() * 2.2) + "s";
+        h.style.animationDelay = (Math.random() * 0.35) + "s";
         document.body.appendChild(h);
-        setTimeout(() => h.remove(), 6000);
+        setTimeout(() => h.remove(), 8000);
       }
     }
 
@@ -197,6 +225,10 @@
       question.classList.add("hidden");
       thanks.classList.remove("hidden");
       spawnHearts();
+    });
+
+    window.addEventListener("resize", () => {
+      moveNo();
     });
   </script>
 </body>
