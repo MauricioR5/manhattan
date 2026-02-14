@@ -74,12 +74,12 @@
 
     .btn-area {
       margin-top: 20px;
-      position: relative;
       width: 100%;
-      height: 160px;
       max-width: 520px;
       margin-left: auto;
       margin-right: auto;
+      height: 160px;
+      position: relative;
     }
 
     button {
@@ -91,20 +91,23 @@
       position: absolute;
       touch-action: manipulation;
       white-space: nowrap;
+      z-index: 1;
     }
 
     .yes {
       background: linear-gradient(135deg, #ff4d7d, #ff7aa2);
       color: white;
-      left: 20%;
+      left: 20px;
       top: 60px;
+      z-index: 2;
     }
 
     .no {
       background: #e9e9ef;
       color: #2b2b2b;
-      left: 60%;
+      right: 20px;
       top: 60px;
+      z-index: 1;
     }
 
     .hidden { display: none; }
@@ -165,7 +168,7 @@
     const question = document.getElementById("question");
     const thanks = document.getElementById("thanks");
 
-    function intersects(a, b, gap = 10) {
+    function overlaps(a, b, gap = 12) {
       return !(
         a.right + gap < b.left ||
         a.left - gap > b.right ||
@@ -174,26 +177,64 @@
       );
     }
 
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function setNoAt(x, y) {
+      noBtn.style.left = x + "px";
+      noBtn.style.top = y + "px";
+      noBtn.style.right = "auto";
+    }
+
     function moveNo() {
-      const area = btnArea.getBoundingClientRect();
+      const areaRect = btnArea.getBoundingClientRect();
       const yesRect = yesBtn.getBoundingClientRect();
-      const btnRect = noBtn.getBoundingClientRect();
-      const padding = 10;
 
-      let x, y, tries = 0;
+      const btnW = noBtn.offsetWidth;
+      const btnH = noBtn.offsetHeight;
 
-      do {
-        const maxX = Math.max(padding, area.width - btnRect.width - padding);
-        const maxY = Math.max(padding, area.height - btnRect.height - padding);
+      const padding = 12;
 
-        x = padding + Math.random() * (maxX - padding);
-        y = padding + Math.random() * (maxY - padding);
+      const minX = padding;
+      const maxX = Math.max(minX, areaRect.width - btnW - padding);
+      const minY = padding;
+      const maxY = Math.max(minY, areaRect.height - btnH - padding);
 
-        noBtn.style.left = x + "px";
-        noBtn.style.top = y + "px";
+      const yesLocal = {
+        left: yesRect.left - areaRect.left,
+        right: yesRect.right - areaRect.left,
+        top: yesRect.top - areaRect.top,
+        bottom: yesRect.bottom - areaRect.top
+      };
+
+      const forbiddenLeft = clamp(yesLocal.left - btnW - 14, minX, maxX);
+      const forbiddenRight = clamp(yesLocal.right + 14, minX, maxX);
+
+      let tries = 0;
+      while (tries < 120) {
+        const x = minX + Math.random() * (maxX - minX);
+        const y = minY + Math.random() * (maxY - minY);
+
+        const candidateRectGlobal = {
+          left: areaRect.left + x,
+          right: areaRect.left + x + btnW,
+          top: areaRect.top + y,
+          bottom: areaRect.top + y + btnH
+        };
+
+        const yOverlap = !(candidateRectGlobal.bottom < yesRect.top || candidateRectGlobal.top > yesRect.bottom);
+        const xFront = x >= forbiddenLeft && x <= forbiddenRight;
+
+        if (!(yOverlap && xFront) && !overlaps(candidateRectGlobal, yesRect, 14)) {
+          setNoAt(x, y);
+          return;
+        }
 
         tries++;
-      } while (intersects(noBtn.getBoundingClientRect(), yesRect, 14) && tries < 80);
+      }
+
+      setNoAt(maxX, minY);
     }
 
     function spawnHearts() {
@@ -228,7 +269,9 @@
     });
 
     window.addEventListener("resize", () => {
-      moveNo();
+      noBtn.style.left = "auto";
+      noBtn.style.top = "60px";
+      noBtn.style.right = "20px";
     });
   </script>
 </body>
